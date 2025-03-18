@@ -30,6 +30,7 @@ export default function TextSettings({
                   setDifficulty(el);
                   reset();
                 }}
+                onKeyDown={(e) => e.currentTarget.blur()}
                 disabled={el === "60" || el === "120"}
               >
                 {el}

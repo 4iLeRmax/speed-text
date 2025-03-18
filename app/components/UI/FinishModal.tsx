@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { TResult } from "../SpeedText";
 
 export default function FinishModal({

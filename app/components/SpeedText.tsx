@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import clsx from "clsx";
 
-import { EDifficulty, getRandomText, TDifficulty } from "../lib/randomText";
+import { getRandomText, TDifficulty } from "../lib/randomText";
 
 import { Line } from "./UI/Line";
 import { ResetButton } from "./UI/ResetButton";
@@ -27,14 +27,15 @@ export default function TempSpeedText() {
   const [mistakes, setMistakes] = useState<
     { text: string; index: number; mistakeInSentence: string }[]
   >([]);
+  const [mouseMove, setMouseMove] = useState(false);
 
-  //TODO: show settings when mouse move during typing
   //TODO: upgrade popup window
 
-  //ISSUES: "space" work like click on last clicked button
-
-  //NOTE: if your last typed word is correct we can't erase it after "space" but if it has typo then we can erase it
   //NOTE: if you click "space" then you move to the next word and count missed letters and each missed word is new mistake
+  // ??? if (typed value === ' ' and word from initial text is not full typed then) {
+  //   we skip word and skip 'space' and move to the next word
+  //}
+  //NOTE ???: if your last typed word is correct we can't erase it after "space" but if it has typo then we can erase it
 
   const typoCatching = (
     prevValue: string,
@@ -87,7 +88,6 @@ export default function TempSpeedText() {
   };
 
   const correctnessOfAnswer = () => {
-    console.log(mistakes);
     return 100 - Math.round((mistakes.length / initialText.length) * 100);
   };
 
@@ -206,6 +206,7 @@ export default function TempSpeedText() {
             difficulty={difficulty}
             setDifficulty={setDifficulty}
             reset={reset}
+            testText
           />
         </AnimatePresence>
       ) : null}

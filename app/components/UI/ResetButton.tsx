@@ -34,12 +34,7 @@ export const ResetButton = ({
       ) : null}
       <button
         onClick={onClick}
-        onKeyDown={(e) => {
-          console.log(e.key);
-
-          e.preventDefault();
-          return false;
-        }}
+        onKeyDown={(e) => e.currentTarget.blur()}
         className="p-2"
         onMouseEnter={() => setIsOpen(true)}
         onMouseLeave={() => setIsOpen(false)}
