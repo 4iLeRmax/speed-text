@@ -1,42 +1,36 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import clsx from "clsx";
 
 import { getRandomText, TDifficulty } from "../lib/randomText";
+import { wordPerMinute } from "../lib/wordPerMinute";
+import { correctnessOfAnswer } from "../lib/correctnessOfAnswer";
 
-import { Line } from "./UI/Line";
-import { ResetButton } from "./UI/ResetButton";
-import FinishModal from "./UI/FinishModal";
 import TextSettings from "./TextSettings";
-import { AnimatePresence } from "motion/react";
 
-export type TResult = {
-  correctnessOfAnswer: number;
-  WPM: number;
-  seconds: number;
-};
+import { ResetButton } from "./UI/ResetButton";
+import ResultingModal from "./UI/ResultingModal";
+import Sentence from "./UI/Sentence";
+import { TMistake, TResult } from "@/types";
 
 export default function TempSpeedText() {
   const [difficulty, setDifficulty] = useState<TDifficulty>("15");
-  const [initialText, setInitialText] = useState(getRandomText(difficulty));
+  const [initialText, setInitialText] = useState("");
   const [typedText, setTypedText] = useState("");
 
   const [time, setTime] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const [mistakes, setMistakes] = useState<
-    { text: string; index: number; mistakeInSentence: string }[]
-  >([]);
-  const [mouseMove, setMouseMove] = useState(false);
+  const [mistakes, setMistakes] = useState<TMistake[]>([]);
 
-  //TODO: upgrade popup window
+  //ISSUES: incorrect letters are hidden
+  //TODO: create API endpoint (GET method) that getting data from db with prisma
+  //TODO: fetch those data in useEffect and setting data in state initialText
 
-  //NOTE: if you click "space" then you move to the next word and count missed letters and each missed word is new mistake
-  // ??? if (typed value === ' ' and word from initial text is not full typed then) {
-  //   we skip word and skip 'space' and move to the next word
-  //}
-  //NOTE ???: if your last typed word is correct we can't erase it after "space" but if it has typo then we can erase it
+  //TODO: In Finish Modal use Portal
+  //TODO: custom scroll bar for mistakes on the finish modal
+  //TODO: auth for saving statistics and creating leaderboard with best results
 
+  // Array.from(document.querySelectorAll('.word')).map(node=> node.textContent).join(' ')
   const typoCatching = (
     prevValue: string,
     currentValue: string,
@@ -61,34 +55,36 @@ export default function TempSpeedText() {
     }
   };
 
+  const lastWordIsCorrect = () => {
+    const indexOfLastTYpedWord = typedText.split(" ").length - 1;
+
+    return (
+      initialText.split(" ")[indexOfLastTYpedWord] ===
+      typedText.split(" ")[indexOfLastTYpedWord]
+    );
+  };
   const handleKeyPress: any = (e: React.KeyboardEvent) => {
-    setTypedText((p) => {
-      const lastTypedValue = e.key;
-      const currentValue = p + lastTypedValue;
-      const indexOfLastTypedValue = currentValue.length - 1;
+    if (e.key !== "Enter") {
+      setTypedText((p) => {
+        const lastTypedValue = e.key;
+        const currentValue = p + lastTypedValue;
+        const indexOfLastTypedValue = currentValue.length - 1;
 
-      // console.log({ prevValue: p });
-      // console.log({ currentValue });
-      typoCatching(p, currentValue, lastTypedValue, indexOfLastTypedValue);
+        // console.log({ prevValue: p });
+        // console.log({ currentValue });
+        typoCatching(p, currentValue, lastTypedValue, indexOfLastTypedValue);
 
-      return p.length + 1 <= initialText.length ? p + lastTypedValue : p;
-    });
+        return p.length + 1 <= initialText.length ? p + lastTypedValue : p;
+      });
+    }
   };
 
   const backspace: any = (e: React.KeyboardEvent) => {
     if (e.key === "Backspace") {
-      setTypedText((p) => p.slice(0, p.length - 1));
+      if (!lastWordIsCorrect()) {
+        setTypedText((p) => p.slice(0, p.length - 1));
+      }
     }
-  };
-
-  const wordPerMinute = (mls: number) => {
-    const words = initialText.split(" ").length;
-    const seconds = mls / 1000;
-    return Math.round((words / seconds) * 60);
-  };
-
-  const correctnessOfAnswer = () => {
-    return 100 - Math.round((mistakes.length / initialText.length) * 100);
   };
 
   const reset = () => {
@@ -181,61 +177,51 @@ export default function TempSpeedText() {
   useEffect(() => {
     let intervalId: any;
     if (isRunning) {
-      intervalId = setInterval(() => setTime((p) => p + 1000), 1000);
+      intervalId = setInterval(() => setTime((p) => p + 3000), 3000);
     }
     return () => clearInterval(intervalId);
   }, [isRunning]);
 
-  const isEnd = time > 0 && !isRunning && typedText !== "";
+  const isEnd =
+    time > 0 &&
+    !isRunning &&
+    typedText !== "" &&
+    correctnessOfAnswer(initialText.length, mistakes.length) > 1;
 
-  const results: TResult = {
-    correctnessOfAnswer: correctnessOfAnswer(),
-    WPM: wordPerMinute(time),
+  const result: TResult = {
+    WPM: wordPerMinute(initialText, time),
+    correctnessOfAnswer: correctnessOfAnswer(
+      initialText.length,
+      mistakes.length
+    ),
     seconds: time / 1000,
+    mistakes,
   };
 
-  // console.log({ text });
+  // console.log({ initialText });
   // console.log({ typedText });
+  // console.log({ time });
 
   return (
     <div className="bg-neutral-800 w-screen h-screen p-10 relative">
-      <FinishModal isOpen={isEnd} results={results} reset={reset} />
-      {typedText === "" ? (
-        <AnimatePresence>
-          <TextSettings
-            difficulty={difficulty}
-            setDifficulty={setDifficulty}
-            reset={reset}
-            testText
-          />
-        </AnimatePresence>
+      {isEnd ? (
+        <ResultingModal
+          result={result}
+          reset={reset}
+          initialText={initialText}
+        />
       ) : null}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full flex flex-col gap-2 items-center select-none text-2xl">
-        <div className="flex items-center relative flex-wrap w-2/3">
-          {typedText.length === 0 ? <Line variants="waiting" /> : null}
-          {initialText.split("").map((char, i) => (
-            <div
-              key={i}
-              className={clsx("relative", {
-                "w-3 h-8": char === " ",
-                "text-neutral-600": typedText[i] === undefined,
-                "text-white":
-                  typedText[i] !== undefined && char === typedText[i],
-                "text-red-600":
-                  typedText[i] !== undefined && char !== typedText[i],
-              })}
-            >
-              {typedText.length - 1 === i ? <Line variants="working" /> : null}
+      {typedText === "" || isEnd ? (
+        <TextSettings
+          difficulty={difficulty}
+          setDifficulty={setDifficulty}
+          reset={reset}
+          testText
+        />
+      ) : null}
 
-              {char}
-              {typedText[i] !== undefined && char !== typedText[i] ? (
-                <div className="absolute bottom-3/4 left-1/2 -translate-x-1/2 text-sm text-red-800">
-                  {typedText[i]}
-                </div>
-              ) : null}
-            </div>
-          ))}
-        </div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full flex flex-col gap-2 items-center select-none text-2xl">
+        <Sentence initialText={initialText} typedText={typedText} />
         <ResetButton onClick={reset} />
       </div>
     </div>

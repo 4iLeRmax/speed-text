@@ -31,7 +31,6 @@ export default function TextSettings({
                   reset();
                 }}
                 onKeyDown={(e) => e.currentTarget.blur()}
-                disabled={el === "60" || el === "120"}
               >
                 {el}
               </button>

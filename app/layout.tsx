@@ -29,6 +29,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         {children}
+        <div id="modals"></div>
       </body>
     </html>
   );
