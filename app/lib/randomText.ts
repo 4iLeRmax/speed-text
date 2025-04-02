@@ -54,7 +54,6 @@ export const sentences = {
   test: ["drive a car like me"],
 };
 
-// export type TDifficulty = "15" | "30" | "60" | "120" | "test";
 export const EDifficulty = {
   Short: "15",
   Medium: "30",
@@ -65,12 +64,13 @@ export const EDifficulty = {
 
 export type TDifficulty = (typeof EDifficulty)[keyof typeof EDifficulty];
 
-export const getRandomText = (words: TDifficulty) => {
-  const selectedArray = sentences[words];
+export const getRandomText = async (words: TDifficulty) => {
+  const selectedArray = await fetch(
+    `http://localhost:3000/api/sentences?words=${words}`
+  ).then((res) => res.json());
 
   const randomText =
     selectedArray[Math.floor(Math.random() * (selectedArray.length - 1))];
 
-  return randomText;
-  // return "drive like me";
+  return randomText.text;
 };
