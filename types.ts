@@ -10,3 +10,9 @@ export type TResult = {
   seconds: number;
   mistakes: TMistake[];
 };
+
+declare global {
+  interface String {
+    countOfWords(): number;
+  }
+}

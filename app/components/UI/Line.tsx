@@ -16,7 +16,7 @@ export const Line = ({ variants, lineRef }: LineProps) => {
             // "absolute top-[12.5%] w-[1px] h-[24px] bg-yellow-500",
             "absolute w-[1px] h-[32px] bg-yellow-500",
             {
-              "right-full animate-pulse top-2": variants === "waiting",
+              "right-full animate-blink top-2": variants === "waiting",
               "left-full top-0": variants === "working",
             }
           )}

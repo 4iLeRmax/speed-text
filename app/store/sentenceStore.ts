@@ -1,28 +1,48 @@
 import { create } from "zustand";
 import prisma from "../lib/prisma";
 import { Prisma } from "@prisma/client";
-import { TDifficulty } from "../lib/randomText";
+import { TDifficulty } from "../lib/getRandomSentence";
+import sentence from "../lib/sentence";
 
 type TSentenceGroup = Prisma.SentenceGroupGetPayload<{}>;
 type TSentence = Prisma.SentenceGetPayload<{}>;
 
-// type TSentenceStore = {
-//   sentenceGroup: TSentenceGroup;
-//   sentences: TSentence[];
-//   fetchSentenceGroup: () => Promise<void>;
-// };
-
 type TSentenceStore = {
-  sentenceGroup: TDifficulty;
-  sentences: string[];
-  fetchSentenceGroup: () => Promise<void>;
+  sentenceGroupsKey: string[];
+  sentenceGroups: { [TDifficulty: string]: string[] };
+  fetchSentenceGroupsKey: () => Promise<void>;
+  fetchSentencesByGroupKey: (groupKey: TDifficulty) => Promise<void>;
+  getSentencesByCroupKey: (groupKey: TDifficulty) => string[];
 };
 
-export const useSentenceStore = create<TSentenceStore>((set, get) => ({
-  sentenceGroup: "15",
-  sentences: [],
+const { getSentenceGroups, getSentencesByGroupKey } = sentence;
 
-  fetchSentenceGroup: async () => {
-    const groups = await prisma.sentenceGroup.findMany({});
+export const useSentenceStore = create<TSentenceStore>((set, get) => ({
+  sentenceGroupsKey: [],
+  sentenceGroups: {},
+
+  fetchSentenceGroupsKey: async () => {
+    const groups: TSentenceGroup[] = await getSentenceGroups();
+    const groupsKey = groups.map((group) => group.groupKey);
+
+    set({ sentenceGroupsKey: groupsKey });
+  },
+  fetchSentencesByGroupKey: async (groupKey: TDifficulty) => {
+    const existSentenceGroup = get().sentenceGroups[groupKey];
+
+    if (!existSentenceGroup) {
+      const sentences = await getSentencesByGroupKey(groupKey);
+      const sentencesText = sentences.map((el) => el.text);
+
+      set((state) => ({
+        sentenceGroups: {
+          ...state.sentenceGroups,
+          [groupKey]: sentencesText,
+        },
+      }));
+    }
+  },
+  getSentencesByCroupKey: (groupKey: TDifficulty) => {
+    return get().sentenceGroups[groupKey];
   },
 }));

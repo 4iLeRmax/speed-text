@@ -1,26 +1,24 @@
-"use client";
-
-import React, { useState } from "react";
-import { RotateCcw } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
 import clsx from "clsx";
+import { motion, AnimatePresence } from "motion/react";
+import React, { useState } from "react";
 
-export const ResetButton = ({
-  size = 20,
-  color = "#525252",
-  onClick,
-}: {
-  size?: number;
-  color?: string;
+type RestartButtonProps = {
+  children: React.ReactNode;
   onClick: () => void;
-}) => {
+  secondChildren?: React.ReactNode;
+  styles?: string;
+};
+export default function RestartButton({
+  children,
+  onClick,
+  secondChildren,
+  styles,
+}: RestartButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleClick = () => {};
-
   return (
-    <div className="relative mt-5">
-      {isOpen ? (
+    <>
+      {secondChildren && isOpen ? (
         <AnimatePresence>
           <motion.div
             className={clsx(
@@ -30,19 +28,19 @@ export const ResetButton = ({
               "before:border-solid before:border-b-neutral-900 before:border-b-8 before:border-x-transparent before:border-x-8 before:border-t-0"
             )}
           >
-            Restart Test
+            {secondChildren}
           </motion.div>
         </AnimatePresence>
       ) : null}
       <button
         onClick={onClick}
         onKeyDown={(e) => e.currentTarget.blur()}
-        className="p-2"
         onMouseEnter={() => setIsOpen(true)}
         onMouseLeave={() => setIsOpen(false)}
+        className={styles !== "" ? styles : ""}
       >
-        <RotateCcw size={size} color={color} />
+        {children}
       </button>
-    </div>
+    </>
   );
-};
+}

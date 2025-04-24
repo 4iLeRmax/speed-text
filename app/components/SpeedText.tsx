@@ -1,21 +1,51 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { getRandomText, TDifficulty } from "../lib/randomText";
+import { getRandomSentence, TDifficulty } from "../lib/getRandomSentence";
 import { wordPerMinute } from "../lib/wordPerMinute";
 import { correctnessOfAnswer } from "../lib/correctnessOfAnswer";
+import { isValidDifficulty } from "../lib/isValidDifficulty";
 
-import TextSettings from "./TextSettings";
+import { useSentenceStore } from "../store/sentenceStore";
 
-import { ResetButton } from "./UI/ResetButton";
+// import TextSettings from "./TextSettings";
+// import CountOfWords from "./CountOfWords";
+// import Sentence from "./UI/Sentence";
+const TextSettings = dynamic(() => import("./TextSettings"), {
+  ssr: false,
+  loading: () => <TextSettingsSkeleton />,
+});
+const CountOfWords = dynamic(() => import("./CountOfWords"), {
+  ssr: false,
+  loading: () => <CountOfWordsSkeleton />,
+});
+const Sentence = dynamic(() => import("./UI/Sentence"), {
+  ssr: false,
+  loading: () => <SentenceSkeleton />,
+});
 import ResultingModal from "./UI/ResultingModal";
-import Sentence from "./UI/Sentence";
-import { TMistake, TResult } from "@/types";
-import { motion, AnimatePresence } from "motion/react";
 
-export default function TempSpeedText() {
-  const [difficulty, setDifficulty] = useState<TDifficulty>("15");
+import { TMistake, TResult } from "@/types";
+import dynamic from "next/dynamic";
+import {
+  CountOfWordsSkeleton,
+  SentenceSkeleton,
+  TextSettingsSkeleton,
+} from "./UI/skeletons";
+import RestartButton from "./UI/RestartButton";
+import { RotateCcw } from "lucide-react";
+
+export default function SpeedText() {
+  const searchParams = useSearchParams();
+
+  const [difficulty, setDifficulty] = useState<TDifficulty>(
+    isValidDifficulty(searchParams.get("words"))
+      ? (searchParams.get("words") as TDifficulty)
+      : "15"
+  );
   const [initialText, setInitialText] = useState("");
   const [typedText, setTypedText] = useState("");
 
@@ -23,16 +53,53 @@ export default function TempSpeedText() {
   const [isRunning, setIsRunning] = useState(false);
   const [mistakes, setMistakes] = useState<TMistake[]>([]);
   const [menuIsOpen, setMenuIsOpen] = useState(true);
+  const [backspaceButtonIsPressed, setBackspaceButtonIsPressed] = useState(0);
 
-  //TODO 1: get sentence categories once and set all of them in state management(zustand)
-  //TODO 1.1: create store with four arrays for each difficulty 15,30,50,100
-  //TODO: auth for saving statistics and creating leaderboard with best results
+  const router = useRouter();
+  const pathname = usePathname();
 
-  // Array.from(document.querySelectorAll('.word')).map(node=> node.textContent).join(' ')
+  const { fetchSentencesByGroupKey, getSentencesByCroupKey } =
+    useSentenceStore();
+  const MAXIMUM_UPDATE_DEPTH = 20;
 
-  const fetchSentence = async () => {
-    const sentence = await getRandomText(difficulty);
-    setInitialText(sentence);
+  useEffect(() => {
+    (async () => {
+      await fetchSentencesByGroupKey(difficulty);
+      const sentences = getSentencesByCroupKey(difficulty);
+      setInitialText(getRandomSentence(sentences));
+      // console.log("initial fetch");
+    })();
+  }, [fetchSentencesByGroupKey]);
+
+  const reset = () => {
+    setTypedText("");
+    setTime(0);
+    setIsRunning(false);
+    setMistakes([]);
+  };
+
+  const restart = (difficulty: TDifficulty) => {
+    const sentences = getSentencesByCroupKey(difficulty);
+    setInitialText(getRandomSentence(sentences as string[]));
+
+    reset();
+  };
+
+  const changeDifficulty = async (difficulty: string) => {
+    setDifficulty(difficulty as TDifficulty);
+    router.push(`${pathname}?words=${difficulty}`);
+
+    const groupAlreadyExist =
+      getSentencesByCroupKey(difficulty as TDifficulty) !== undefined;
+
+    if (!groupAlreadyExist) {
+      await fetchSentencesByGroupKey(difficulty as TDifficulty);
+      // console.log("fetch");
+    }
+    // else {
+    //   console.log("already fetched");
+    // }
+    restart(difficulty as TDifficulty);
   };
 
   const typoCatching = (
@@ -62,21 +129,36 @@ export default function TempSpeedText() {
   const lastWordIsCorrect = () => {
     const indexOfLastTypedWord = typedText.split(" ").length - 1;
 
+    return false;
     return (
       initialText.split(" ")[indexOfLastTypedWord] ===
       typedText.split(" ")[indexOfLastTypedWord]
     );
   };
 
+  const maximumUpdateDepth = (typedText: string) => {
+    if (typedText.length >= MAXIMUM_UPDATE_DEPTH) {
+      const typedTextSlice = typedText.slice(-MAXIMUM_UPDATE_DEPTH);
+
+      const firstCharOfSlice = typedTextSlice[0];
+
+      for (let i = 0; i < MAXIMUM_UPDATE_DEPTH; i++) {
+        if (typedTextSlice[i] !== firstCharOfSlice) return false;
+      }
+      return true;
+    }
+  };
+
   const handleKeyPress: any = (e: React.KeyboardEvent) => {
     if (e.key !== "Enter") {
       setTypedText((p) => {
+        setBackspaceButtonIsPressed(0);
         const lastTypedValue = e.key;
         const currentValue = p + lastTypedValue;
         const indexOfLastTypedValue = currentValue.length - 1;
 
-        // console.log({ prevValue: p });
-        // console.log({ currentValue });
+        if (maximumUpdateDepth(p)) return p;
+
         typoCatching(p, currentValue, lastTypedValue, indexOfLastTypedValue);
 
         return p.length + 1 <= initialText.length ? p + lastTypedValue : p;
@@ -87,29 +169,21 @@ export default function TempSpeedText() {
   const backspace: any = (e: React.KeyboardEvent) => {
     if (e.key === "Backspace") {
       if (!lastWordIsCorrect()) {
-        setTypedText((p) => p.slice(0, p.length - 1));
+        if (typedText !== "") {
+          setBackspaceButtonIsPressed((p) => ++p);
+          setTypedText((p) => p.slice(0, p.length - 1));
+        }
+        if (backspaceButtonIsPressed >= 60) {
+          setBackspaceButtonIsPressed(0);
+          reset();
+        }
       }
     }
   };
 
-  const reset = () => {
-    setTypedText("");
-    setTime(0);
-    setIsRunning(false);
-    setMistakes([]);
-    fetchSentence();
-    // setInitialText(getRandomText(difficulty));
-  };
-
   const mouseHandler = () => {
     setMenuIsOpen(true);
-    console.log();
   };
-
-  useEffect(() => {
-    fetchSentence();
-    // setInitialText(getRandomText(difficulty));
-  }, [difficulty]);
 
   useEffect(() => {
     window.addEventListener("keypress", handleKeyPress);
@@ -151,48 +225,21 @@ export default function TempSpeedText() {
         }
       }
     }
-
     //---RESET---
     if (typedText.length === 0) {
       setTime(0);
       setIsRunning(false);
       setMistakes([]);
     }
-
-    // //---EVERY TYPED VALUE---
-    // console.log(typedText);
-
-    // if (
-    //   // prev value length < current value length
-    //   lastTypedValue !== initialText[indexOfLastTypedValue]
-    //   //  &&
-    //   // !mistakes.some(
-    //   //   (mistake) =>
-    //   //     mistake.text === text[indexOfLastTypedValue] &&
-    //   //     mistake.index === indexOfLastTypedValue
-    //   // )
-    // ) {
-    //   setMistakes((p) => [
-    //     ...p,
-    //     {
-    //       text: initialText[indexOfLastTypedValue],
-    //       index: indexOfLastTypedValue,
-    //       mistakeInSentence:
-    //         initialText.slice(0, indexOfLastTypedValue) +
-    //         "_" +
-    //         initialText.slice(indexOfLastTypedValue + 1),
-    //     },
-    //   ]);
-    // }
   }, [typedText]);
 
-  useEffect(() => {
-    let intervalId: any;
-    if (isRunning) {
-      intervalId = setInterval(() => setTime((p) => p + 1000), 1000);
-    }
-    return () => clearInterval(intervalId);
-  }, [isRunning]);
+  // useEffect(() => {
+  //   let intervalId: any;
+  //   if (isRunning) {
+  //     intervalId = setInterval(() => setTime((p) => p + 1000), 1000);
+  //   }
+  //   return () => clearInterval(intervalId);
+  // }, [isRunning]);
 
   const isEnd =
     time > 0 &&
@@ -210,62 +257,48 @@ export default function TempSpeedText() {
     mistakes,
   };
 
-  // console.log({ initialText });
-  // console.log({ typedText });
-  // console.log({ time });
-
-  // console.log(initialText);
-
-  // const indexOfLastTypedValue = typedText.length - 1;
-  // console.log(initialText);
-  // console.log(indexOfLastTypedValue);
-
-  // for (let i = 0; i < typedText.length; i++) {
-  //   const char = typedText[i];
-
-  //   console.log(char);
-  //   console.log(i);
-  //   console.log(initialText[i]);
-  //   let a = i;
-  //   while (char !== " ") {
-  //     --a;
-  //   }
-  //   console.log(initialText[i - 1]);
-  //   console.log(initialText[i - 2]);
-  //   console.log(initialText[i - 3]);
-  //   console.log(initialText[i - 4]);
-  // }
-
   return (
-    <div className="bg-neutral-800 w-screen h-screen p-10 relative">
-      {isEnd ? (
+    <>
+      {isEnd && typedText.countOfWords() === initialText.countOfWords() ? (
         <ResultingModal
           result={result}
-          reset={reset}
+          difficulty={difficulty}
+          restart={restart}
           initialText={initialText}
         />
       ) : null}
-      <AnimatePresence>
-        {typedText === "" || isEnd || menuIsOpen ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <TextSettings
-              difficulty={difficulty}
-              setDifficulty={setDifficulty}
-              reset={reset}
-              testText
-            />
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      <div className="bg-neutral-800 w-screen h-screen p-10 relative select-none">
+        <AnimatePresence>
+          {typedText === "" || isEnd || menuIsOpen ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <TextSettings
+                difficulty={difficulty}
+                handleClick={changeDifficulty}
+                testText
+              />
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
 
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full flex flex-col gap-2 items-center select-none text-2xl">
-        <Sentence initialText={initialText} typedText={typedText} />
-        <ResetButton onClick={reset} />
+        {/* <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full flex flex-col gap-1 items-center text-2xl px-10"> */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full flex flex-col gap-1 items-center text-2xl px-10">
+          <div className="w-2/3 h-[152px]">
+            <CountOfWords initialText={initialText} typedText={typedText} />
+            <Sentence initialText={initialText} typedText={typedText} />
+          </div>
+          <RestartButton
+            onClick={() => restart(difficulty)}
+            secondChildren={"Restart Test"}
+            styles="relative mt-5"
+          >
+            <RotateCcw size={20} color={"#525252"} />
+          </RestartButton>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

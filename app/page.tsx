@@ -1,23 +1,44 @@
 import dynamic from "next/dynamic";
 import React from "react";
 import SpeedTextWrapper from "./components/SpeedTextWrapper";
-import { sentences } from "./lib/randomText";
-import prisma from "./lib/prisma";
-import { getSentence } from "./lib/getSentence";
-// import TempSpeedText from "./components/tempSpeedText";
 
-export default async function HomePage() {
-  const sentence100 = await getSentence("100");
+export default function HomePage() {
+  function gcd(a: number, b: number) {
+    let resA: number[] = [];
+    let resB: number[] = [];
 
-  // console.log(sentence100);
+    const func1 = (num: number, arr: number[]) => {
+      let temp = 2;
+      while (num % temp !== 0) {
+        temp++;
+      }
+      arr.push(temp);
+      num = num / temp;
+
+      if (num !== 1) func1(num, arr);
+    };
+
+    func1(a, resA);
+    func1(b, resB);
+
+    return resA
+      .filter((el, i) => {
+        const matchElIndex = resB.indexOf(el);
+
+        if (matchElIndex !== -1) {
+          resB.splice(matchElIndex, 1);
+          return true;
+        }
+        return false;
+      })
+      .reduce((acc, curr) => acc * curr);
+  }
+
+  console.log(gcd(8, 20));
 
   return (
     <>
-      {/* <SpeedText text="drive courage pupil ball worried carried law ear creature wing pressure" /> */}
-      {/* <TempSpeedText /> */}
-      <SpeedTextWrapper />
-      {/* <TempSpeedText text={"movie layers task strange"} /> */}
+      <>{/* <SpeedTextWrapper /> */}</>
     </>
   );
 }
-//1 line of text - 32px
