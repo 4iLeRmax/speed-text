@@ -37,7 +37,9 @@ export default function ResultingStatistics({
         </span>
       </div>
       <div className="flex items-center justify-evenly mb-3">
-        <h1 className="text-center">WPM: {result.WPM}</h1>
+        <h1 className="text-center" title="WORDS PER MINUTE">
+          WPM: {result.WPM}
+        </h1>
         <h1 className="text-center">Time: {result.seconds}s</h1>
         <h1 className="text-center">Mistakes: {result.mistakes.length}</h1>
       </div>

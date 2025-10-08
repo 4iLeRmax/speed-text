@@ -233,13 +233,13 @@ export default function SpeedText() {
     }
   }, [typedText]);
 
-  // useEffect(() => {
-  //   let intervalId: any;
-  //   if (isRunning) {
-  //     intervalId = setInterval(() => setTime((p) => p + 1000), 1000);
-  //   }
-  //   return () => clearInterval(intervalId);
-  // }, [isRunning]);
+  useEffect(() => {
+    let intervalId: any;
+    if (isRunning) {
+      intervalId = setInterval(() => setTime((p) => p + 100), 100);
+    }
+    return () => clearInterval(intervalId);
+  }, [isRunning]);
 
   const isEnd =
     time > 0 &&

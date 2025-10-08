@@ -1,11 +1,10 @@
 import { create } from "zustand";
-import prisma from "../lib/prisma";
 import { Prisma } from "@prisma/client";
 import { TDifficulty } from "../lib/getRandomSentence";
 import sentence from "../lib/sentence";
 
 type TSentenceGroup = Prisma.SentenceGroupGetPayload<{}>;
-type TSentence = Prisma.SentenceGetPayload<{}>;
+// type TSentence = Prisma.SentenceGetPayload<{}>;
 
 type TSentenceStore = {
   sentenceGroupsKey: string[];
