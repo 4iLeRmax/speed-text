@@ -44,7 +44,7 @@ export default function SpeedText() {
   const [difficulty, setDifficulty] = useState<TDifficulty>(
     isValidDifficulty(searchParams.get("words"))
       ? (searchParams.get("words") as TDifficulty)
-      : "15"
+      : "15",
   );
   const [initialText, setInitialText] = useState("");
   const [typedText, setTypedText] = useState("");
@@ -69,7 +69,7 @@ export default function SpeedText() {
       setInitialText(getRandomSentence(sentences));
       // console.log("initial fetch");
     })();
-  }, [fetchSentencesByGroupKey]);
+  }, [fetchSentencesByGroupKey, difficulty, getSentencesByCroupKey]);
 
   const reset = () => {
     setTypedText("");
@@ -106,7 +106,7 @@ export default function SpeedText() {
     prevValue: string,
     currentValue: string,
     lastTypedValue: string,
-    indexOfLastTypedValue: number
+    indexOfLastTypedValue: number,
   ) => {
     if (
       prevValue.length < currentValue.length &&
@@ -149,7 +149,7 @@ export default function SpeedText() {
     }
   };
 
-  const handleKeyPress: any = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: KeyboardEvent) => {
     if (e.key !== "Enter") {
       setTypedText((p) => {
         setBackspaceButtonIsPressed(0);
@@ -166,7 +166,7 @@ export default function SpeedText() {
     }
   };
 
-  const backspace: any = (e: React.KeyboardEvent) => {
+  const backspace = (e: KeyboardEvent) => {
     if (e.key === "Backspace") {
       if (!lastWordIsCorrect()) {
         if (typedText !== "") {
@@ -195,7 +195,7 @@ export default function SpeedText() {
       window.removeEventListener("keydown", backspace);
       window.removeEventListener("mousemove", mouseHandler);
     };
-  }, [handleKeyPress]);
+  }, [handleKeyPress, backspace, mouseHandler]);
 
   useEffect(() => {
     setMenuIsOpen(false);
@@ -209,7 +209,7 @@ export default function SpeedText() {
         if (typedText[i] !== initialText[i]) {
           if (
             !mistakes.some(
-              (mistake) => mistake.text === typedText[i] && mistake.index === i
+              (mistake) => mistake.text === typedText[i] && mistake.index === i,
             )
           ) {
             setMistakes((p) => [
@@ -234,7 +234,7 @@ export default function SpeedText() {
   }, [typedText]);
 
   useEffect(() => {
-    let intervalId: any;
+    let intervalId: ReturnType<typeof setInterval>;
     if (isRunning) {
       intervalId = setInterval(() => setTime((p) => p + 100), 100);
     }
@@ -251,7 +251,7 @@ export default function SpeedText() {
     WPM: wordPerMinute(initialText, time),
     correctnessOfAnswer: correctnessOfAnswer(
       initialText.length,
-      mistakes.length
+      mistakes.length,
     ),
     seconds: time / 1000,
     mistakes,

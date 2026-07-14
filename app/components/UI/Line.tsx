@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 
 type LineProps = {
   variants: "waiting" | "working";
-  lineRef?: React.RefObject<null>;
+  lineRef?: React.RefObject<HTMLDivElement | null>;
 };
 
 export const Line = ({ variants, lineRef }: LineProps) => {
@@ -18,7 +18,7 @@ export const Line = ({ variants, lineRef }: LineProps) => {
             {
               "right-full animate-blink top-2": variants === "waiting",
               "left-full top-0": variants === "working",
-            }
+            },
           )}
           layoutId="line"
           transition={{ duration: 0.2 }}

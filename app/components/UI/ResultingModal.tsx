@@ -1,10 +1,7 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import clsx from "clsx";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { TResult } from "@/types";
-import Mistake from "./Mistake";
 import { createPortal } from "react-dom";
 import Portal from "../Portal";
 import Modal from "../Modal";
@@ -27,14 +24,14 @@ export default function ResultingModal({
 }) {
   const [showMore, setShowMore] = useState(false);
 
+  useEffect(() => {
+    setShowMore(false);
+  }, []);
+
   const modals = document.getElementById("modals");
   if (modals === null) return null;
 
   const toggleShowMore = () => setShowMore((p) => !p);
-
-  useEffect(() => {
-    setShowMore(false);
-  }, []);
 
   const component = (
     <>
@@ -69,7 +66,7 @@ export default function ResultingModal({
         <Portal>
           <Modal>{component}</Modal>
         </Portal>,
-        modals
+        modals,
       )}
     </>
   );

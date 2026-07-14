@@ -2,7 +2,6 @@ import React, { useEffect } from "react";
 import { TDifficulty } from "../lib/getRandomSentence";
 import clsx from "clsx";
 import { useSentenceStore } from "../store/sentenceStore";
-import { usePathname, useRouter } from "next/navigation";
 
 export default function TextSettings({
   difficulty,
@@ -22,9 +21,6 @@ export default function TextSettings({
   useEffect(() => {
     fetchSentenceGroupsKey();
   }, [fetchSentenceGroupsKey]);
-
-  const router = useRouter();
-  const pathname = usePathname();
 
   // const handleClick = (difficulty: string) => {
   //   setDifficulty(difficulty as TDifficulty);

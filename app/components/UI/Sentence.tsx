@@ -16,21 +16,21 @@ export default function Sentence({ initialText, typedText }: SentenceProps) {
   const [currentRow, setCurrentRow] = useState(1);
   const [hiddenRows, setHiddenRows] = useState(0);
 
-  const lineRef = useRef<any>(null);
-  const blockRef = useRef<any>(null);
+  const lineRef = useRef<HTMLDivElement>(null);
+  const blockRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (lineRef.current !== null) {
+    if (lineRef.current !== null && blockRef.current !== null) {
       const cursorTop = Math.floor(lineRef.current.getBoundingClientRect().top);
       const firstLineTop =
         Math.floor(blockRef.current.getBoundingClientRect().top) + MARGIN_TOP;
       const lastLineTop = Math.floor(firstLineTop + LINE_HEIGHT * 2);
 
       const prevLineTop = Math.floor(
-        lastLineTop - LINE_HEIGHT * (currentRow - hiddenRows)
+        lastLineTop - LINE_HEIGHT * (currentRow - hiddenRows),
       );
       const nextLineTop = Math.floor(
-        firstLineTop + LINE_HEIGHT * (currentRow - hiddenRows)
+        firstLineTop + LINE_HEIGHT * (currentRow - hiddenRows),
       );
 
       // Switching to the next row
@@ -49,16 +49,6 @@ export default function Sentence({ initialText, typedText }: SentenceProps) {
           //when currentRow is 2 we don't have hidden rows
           setHiddenRows((p) => (p !== 0 ? --p : p));
       }
-
-      // console.log({
-      //   // firstLineTop,
-      //   // lastLineTop,
-      //   cursorTop,
-      //   nextLineTop,
-      //   prevLineTop,
-      //   // hiddenRows,
-      //   // currentRow,
-      // });
     }
   }, [typedText]);
 

@@ -1,11 +1,13 @@
-import React from "react";
+import React, { Suspense } from "react";
 import SpeedText from "./components/SpeedText";
 
 export default function HomePage() {
   return (
     <>
       <>{/* <SpeedTextWrapper /> */}</>
-      <SpeedText />
+      <Suspense fallback={null}>
+        <SpeedText />
+      </Suspense>
     </>
   );
 }

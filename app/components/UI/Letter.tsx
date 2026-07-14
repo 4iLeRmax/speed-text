@@ -2,13 +2,13 @@ import clsx from "clsx";
 import React from "react";
 import { Line } from "./Line";
 import IncorrectLetter from "./IncorrectLetter";
-import { LINE_HEIGHT, MARGIN_TOP } from "./Sentence";
+import { MARGIN_TOP } from "./Sentence";
 
 type LetterProps = {
   char: string;
   typedLetter: string | undefined;
   isCurrentLetter: boolean;
-  lineRef?: React.RefObject<null>;
+  lineRef?: React.RefObject<HTMLDivElement | null>;
 };
 
 export default function Letter({
