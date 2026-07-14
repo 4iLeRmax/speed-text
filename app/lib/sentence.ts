@@ -11,17 +11,13 @@ type SentencesForGroup = {
 };
 
 const getSentenceGroups = async (): Promise<SentenceGroups[]> => {
-  return await fetch(`http://localhost:3000/api/sentenceGroups`).then((res) =>
-    res.json(),
-  );
+  return await fetch(`/api/sentenceGroups`).then((res) => res.json());
 };
 
 const getSentencesByGroupKey = async (
   groupKey: TDifficulty,
 ): Promise<SentencesForGroup[]> => {
-  return await fetch(`http://localhost:3000/api/sentences/${groupKey}`).then(
-    (res) => res.json(),
-  );
+  return await fetch(`/api/sentences/${groupKey}`).then((res) => res.json());
 };
 
 const sentence = {
